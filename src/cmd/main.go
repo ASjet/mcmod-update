@@ -100,6 +100,7 @@ func main() {
 			mu.Unlock()
 
 			if Download && !fileExist(mod.FileName) {
+				fmt.Printf("Downloading %s\n", mod.FileName)
 				get(mod.Url)
 			}
 		}(fields[1])
@@ -131,9 +132,6 @@ func checkUpdate(cf *repo.CurseforgeRepo, path string, download bool) {
 		wg.Add(1)
 		go func(index int, mod *repo.ModFile) {
 			defer wg.Done()
-			if len(mod.McVersion) < 2 {
-				return
-			}
 			m, err := cf.LatestModFile(mod.ModId, repo.NewVersion(mod.McVersion, mod.ModLoader))
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -146,7 +144,6 @@ func checkUpdate(cf *repo.CurseforgeRepo, path string, download bool) {
 				m = mod
 				notFoundCnt.Add(1)
 			}
-			fmt.Println(m.FileName)
 
 			if !m.Date.After(mod.Date) && fileExist(m.FileName) {
 				return
@@ -155,6 +152,7 @@ func checkUpdate(cf *repo.CurseforgeRepo, path string, download bool) {
 			fmt.Printf("Find update: %s at %s\n", m.DispName, m.Date)
 			mods[index] = m
 			if download && !fileExist(m.FileName) {
+				fmt.Printf("Downloading %s\n", mod.FileName)
 				os.Remove(mod.FileName)
 				get(m.Url)
 			}

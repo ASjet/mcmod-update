@@ -24,9 +24,9 @@ type ModFile struct {
 	FileName     string    `json:"fileName,omitempty"`
 	Date         time.Time `json:"fileDate,omitempty"`
 	Url          string    `json:"downloadUrl,omitempty"`
-	GameVersions []string  `json:"gameVersions,omitempty"`
-	McVersion    string
-	ModLoader    string
+	GameVersions []string  `json:"-"`
+	McVersion    string    `json:"mcVersion,omitempty"`
+	ModLoader    string    `json:"modLoader,omitempty"`
 }
 
 func (m *ModFile) String() string {
