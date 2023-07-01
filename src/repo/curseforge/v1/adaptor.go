@@ -2,8 +2,11 @@ package v1
 
 import (
 	"mcmod-update/src/model"
+	"mcmod-update/src/repo"
 	"mcmod-update/src/repo/curseforge/v1/schema"
 )
+
+var _ repo.FileFetcher = &Adaptor{}
 
 type Adaptor struct {
 	cli *Client
@@ -13,7 +16,15 @@ func NewAdaptor(client *Client) *Adaptor {
 	return &Adaptor{cli: client}
 }
 
-func (a *Adaptor) GetModLatestFile(modId int32) (*model.File, error) {
+func (a *Adaptor) Version() string {
+	return a.cli.gameVersion
+}
+
+func (a *Adaptor) ModLoader() string {
+	return a.cli.modLoader.String()
+}
+
+func (a *Adaptor) GetLatestModFile(modId int32) (*model.File, error) {
 	files, err := a.cli.GetModFiles(modId, 0, 1)
 	if err != nil {
 		return nil, err
@@ -54,6 +65,7 @@ func (a *Adaptor) GetModLatestFile(modId int32) (*model.File, error) {
 	mf := &model.File{
 		ModID:        file.ModID,
 		FileID:       file.ID,
+		ModName:      file.DisplayName,
 		DispName:     file.DisplayName,
 		FileName:     file.FileName,
 		ReleaseType:  file.ReleaseType.String(),
@@ -61,8 +73,8 @@ func (a *Adaptor) GetModLatestFile(modId int32) (*model.File, error) {
 		Date:         file.FileDate,
 		DownloadUrl:  file.DownloadURL,
 		GameVersions: file.GameVersions,
-		McVersion:    a.cli.gameVersion,
-		ModLoader:    a.cli.modLoader.String(),
+		McVersion:    a.Version(),
+		ModLoader:    a.ModLoader(),
 		RequiredDeps: reqDeps,
 		OptionalDeps: optDeps,
 	}
@@ -70,8 +82,8 @@ func (a *Adaptor) GetModLatestFile(modId int32) (*model.File, error) {
 	return mf, nil
 }
 
-func (a *Adaptor) GetModLatestFileWithDeps(modId int32, optional bool) ([]*model.File, error) {
-	file, err := a.GetModLatestFile(modId)
+func (a *Adaptor) GetLatestModFileWithDeps(modId int32, optional bool) ([]*model.File, error) {
+	file, err := a.GetLatestModFile(modId)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +92,7 @@ func (a *Adaptor) GetModLatestFileWithDeps(modId int32, optional bool) ([]*model
 	files = append(files, file)
 
 	for _, req := range file.RequiredDeps {
-		reqFile, err := a.GetModLatestFile(req)
+		reqFile, err := a.GetLatestModFile(req)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +101,7 @@ func (a *Adaptor) GetModLatestFileWithDeps(modId int32, optional bool) ([]*model
 
 	if optional {
 		for _, opt := range file.OptionalDeps {
-			optFile, err := a.GetModLatestFile(opt)
+			optFile, err := a.GetLatestModFile(opt)
 			if err != nil {
 				return nil, err
 			}
