@@ -9,23 +9,16 @@ import (
 var _ repo.FileFetcher = &Adaptor{}
 
 type Adaptor struct {
-	cli *Client
+	apiKey string
 }
 
-func NewAdaptor(client *Client) *Adaptor {
-	return &Adaptor{cli: client}
+func NewAdaptor(apiKey string) *Adaptor {
+	return &Adaptor{apiKey: apiKey}
 }
 
-func (a *Adaptor) Version() string {
-	return a.cli.gameVersion
-}
-
-func (a *Adaptor) ModLoader() string {
-	return a.cli.modLoader.String()
-}
-
-func (a *Adaptor) GetLatestModFile(modId int32) (*model.File, error) {
-	files, err := a.cli.GetModFiles(modId, 0, 1)
+func (a *Adaptor) GetLatestModFile(modId int32, verison, modLoader string) (*model.File, error) {
+	cli := NewClient(a.apiKey, verison, schema.ModLoader(modLoader))
+	files, err := cli.GetModFiles(modId, 0, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +28,10 @@ func (a *Adaptor) GetLatestModFile(modId int32) (*model.File, error) {
 	}
 
 	file := files[0]
+
+	if !file.IsAvailable {
+		return nil, nil
+	}
 
 	sha1 := ""
 	md5 := ""
@@ -73,8 +70,8 @@ func (a *Adaptor) GetLatestModFile(modId int32) (*model.File, error) {
 		Date:         file.FileDate,
 		DownloadUrl:  file.DownloadURL,
 		GameVersions: file.GameVersions,
-		McVersion:    a.Version(),
-		ModLoader:    a.ModLoader(),
+		McVersion:    verison,
+		ModLoader:    modLoader,
 		RequiredDeps: reqDeps,
 		OptionalDeps: optDeps,
 	}
@@ -82,8 +79,9 @@ func (a *Adaptor) GetLatestModFile(modId int32) (*model.File, error) {
 	return mf, nil
 }
 
-func (a *Adaptor) GetLatestModFileWithDeps(modId int32, optional bool) ([]*model.File, error) {
-	file, err := a.GetLatestModFile(modId)
+func (a *Adaptor) GetLatestModFileWithDeps(modId int32, version,
+	modLoader string, optionalDep bool) ([]*model.File, error) {
+	file, err := a.GetLatestModFile(modId, version, modLoader)
 	if err != nil {
 		return nil, err
 	}
@@ -96,16 +94,16 @@ func (a *Adaptor) GetLatestModFileWithDeps(modId int32, optional bool) ([]*model
 	files = append(files, file)
 
 	for _, req := range file.RequiredDeps {
-		reqFile, err := a.GetLatestModFile(req)
+		reqFile, err := a.GetLatestModFile(req, version, modLoader)
 		if err != nil {
 			return nil, err
 		}
 		files = append(files, reqFile)
 	}
 
-	if optional {
+	if optionalDep {
 		for _, opt := range file.OptionalDeps {
-			optFile, err := a.GetLatestModFile(opt)
+			optFile, err := a.GetLatestModFile(opt, version, modLoader)
 			if err != nil {
 				return nil, err
 			}

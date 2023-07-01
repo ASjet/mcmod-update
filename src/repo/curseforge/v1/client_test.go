@@ -15,7 +15,7 @@ const (
 )
 
 var (
-	cli  = testClient()
+	cli  = NewClient(apiKey(), "1.19.2", schema.Forge)
 	skip = false // Set to true to skip tests
 )
 
@@ -30,13 +30,12 @@ func TestGetModFiles(t *testing.T) {
 	printJson(files)
 }
 
-func testClient() *Client {
+func apiKey() string {
 	key := os.Getenv(APIKEY_ENV)
 	if len(key) == 0 || skip {
 		skip = true
 	}
-
-	return NewClient(key, "1.19.2", schema.Forge)
+	return key
 }
 
 func printJson(v interface{}) {

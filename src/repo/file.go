@@ -3,8 +3,7 @@ package repo
 import "mcmod-update/src/model"
 
 type FileFetcher interface {
-	Version() string
-	ModLoader() string
-	GetLatestModFile(modId int32) (*model.File, error)
-	GetLatestModFileWithDeps(modId int32, optional bool) ([]*model.File, error)
+	GetLatestModFile(modId int32, version, modLoader string) (*model.File, error)
+	GetLatestModFileWithDeps(modId int32, version, modLoader string,
+		optional bool) ([]*model.File, error)
 }

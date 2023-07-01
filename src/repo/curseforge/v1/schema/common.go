@@ -1,6 +1,9 @@
 package schema
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // Reference: https://docs.curseforge.com/#tocS_ModLoaderType
 type ModLoaderType int
@@ -19,6 +22,23 @@ func (l ModLoaderType) String() string {
 		return "Quilt"
 	default:
 		return "Unknown"
+	}
+}
+
+func ModLoader(modLoader string) ModLoaderType {
+	switch strings.ToLower(modLoader) {
+	case "forge":
+		return Forge
+	case "cauldron":
+		return Cauldron
+	case "liteloader":
+		return LiteLoader
+	case "fabric":
+		return Fabric
+	case "quilt":
+		return Quilt
+	default:
+		return Any
 	}
 }
 
