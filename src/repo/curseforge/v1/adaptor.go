@@ -88,6 +88,10 @@ func (a *Adaptor) GetLatestModFileWithDeps(modId int32, optional bool) ([]*model
 		return nil, err
 	}
 
+	if file == nil {
+		return nil, nil
+	}
+
 	files := make([]*model.File, 0, 1+len(file.RequiredDeps)+len(file.OptionalDeps))
 	files = append(files, file)
 
